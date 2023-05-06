@@ -1,9 +1,8 @@
 from ast import arg
 import ipaddress
-from routes.ui import routes
-from flask_paginate import Pagination, get_page_parameter
-from werkzeug.utils import secure_filename
 
+
+from routes.ui import routes
 from functools import wraps
 from docxtpl import DocxTemplate, InlineImage
 from docx.shared import Mm
@@ -11,6 +10,8 @@ from io import BytesIO
 from system.forms import *
 from flask import send_from_directory, send_file
 import time
+from datetime import datetime
+from datetime import date
 import email_validator
 from system.crypto_functions import (
     gen_uuid,
@@ -44,7 +45,6 @@ from IPy import IP
 import urllib
 import re
 
-
 from app import (
     check_session,
     db,
@@ -58,9 +58,7 @@ from app import (
     check_admin_access,
     check_password_reset,
     cache,
-    app,
 )
-
 
 
 def check_project_access(fn):
@@ -76,7 +74,7 @@ def check_project_access(fn):
     return decorated_view
 
 
-def check_admin_access(fn):
+"""def check_admin_access(fn):
     @wraps(fn)
     def decorated_view(*args, **kwargs):
         user_id = session["id"]
@@ -85,7 +83,7 @@ def check_admin_access(fn):
             return fn(*args, **kwargs)
         return redirect("/forbidden")
 
-    return decorated_view
+    return decorated_view"""
 
 
 def check_issue_template_access(fn):
@@ -278,26 +276,12 @@ def admin_page_interface(*args, **kargs):
         "admin.html", tab_name="Admin", errors=errors, success_message=success
     )
 
-# @routes.route("/project/<uuid:project_id>/sidebar", methods=["GET"])
-# @requires_authorization
-# @check_session
-# @check_password_reset
-# @check_project_access
-# @send_log_data
-# def project_sidebar(project_id, current_project, current_user):
-#     current_project = db.get_project(project_id)
-#     project_counters = db.select_project_stats_divbar(current_project['id'])
-#     return render_template("project/sidebar.html", project_counters=project_counters)
-
 
 @routes.route('/project/<uuid:project_id>/stats', methods=["GET"])
 def project_stats(project_id):
     current_project = db.get_project(str(project_id))
     project_counters = db.select_project_stats_divbar(str(project_id))
     return jsonify(project_counters)
-
-
-
 
 @routes.route("/project/<uuid:project_id>/", methods=["GET"])
 @requires_authorization
@@ -306,7 +290,12 @@ def project_stats(project_id):
 @check_project_access
 @send_log_data
 def project_index(project_id, current_project, current_user):
-    return render_template("project/stats/stats.html", current_project=current_project, tab_name="Stats")
+    return render_template(
+        "project/stats/stats.html", current_project=current_project, tab_name="Stats"
+        
+    
+    )
+
 
 
 @routes.route("/project/<uuid:project_id>/hosts/", methods=["GET"])
@@ -363,10 +352,6 @@ def new_host_form(project_id, current_project, current_user):
     ip_id = db.insert_host(
         current_project["id"], form.ip.data, session["id"], form.description.data
     )
-    
-   
-
-
 
     return redirect("/project/{}/hosts/".format(current_project["id"]))
 
@@ -786,61 +771,7 @@ def new_issue_form(project_id, current_project, current_user):
         errors=errors,
         tab_name="New issue",
     )
-# import math
-# @routes.route("/project/<uuid:project_id>/issues/", methods=["GET"])
-# @requires_authorization
-# @check_session
-# @check_password_reset
-# @check_project_access
-# @send_log_data
-# def issues_list(project_id, current_project, current_user):
-#     page = request.args.get('page', 1, type=int)
-#     per_page = 10  # number of issues per page
-    
-#     issues, total_pages, total_count = paginate(project_id, page, per_page)
 
-#     if not issues:
-#         flash("No issues found.")
-
-#     return render_template(
-#         "project/issues/list.html",
-#         current_project=current_project,
-#         tab_name="Issues",
-#         current_user=current_user,
-#         issues=issues,
-#         total_pages=total_pages,
-#         pagination=Pagination(page=page, per_page=per_page, total=total_count, bs_version=4),
-#         page=page 
-#     )
-
-
-
-# def paginate(project_id, page, per_page):
-#     """Paginate a list of items."""
-#     total_count = db.get_issues_by_project_id(project_id)
-#     total_pages = math.ceil(total_count / per_page)
-#     items = []
-#     if total_pages > 0 and page <= total_pages:
-#         offset = (page - 1) * per_page
-#         items = db.get_issues_by_project_id_pag(project_id, offset, per_page)
-#     return items, total_pages, total_count
-
-
-# @routes.route("/project/<uuid:project_id>/issues/", methods=["GET"])
-# @requires_authorization
-# @check_session
-# @check_password_reset
-# @check_project_access
-# @send_log_data
-# def issues_list(project_id, current_project, current_user):
-#     issues = db.get_issues_by_project_id(project_id)
-#     return render_template(
-#         "project/issues/list.html",
-#         current_project=current_project,
-#         tab_name="Issues",
-#         current_user=current_user,
-#         issues=issues,
-#     )
 
 @routes.route("/project/<uuid:project_id>/issues/", methods=["GET"])
 @requires_authorization
@@ -855,14 +786,6 @@ def issues_list(project_id, current_project, current_user):
         tab_name="Issues",
         current_user=current_user,
     )
-
-
-# def paginate_issues(issues, page, per_page):
-#     start = (page - 1) * per_page
-#     end = start + per_page
-#     paginated_issues = issues[start:end]
-#     return paginated_issues
-
 
 
 @routes.route("/project/<uuid:project_id>/issues/multiple_delete", methods=["POST"])
@@ -2862,7 +2785,6 @@ def project_files(project_id, current_project, current_user):
     )
 
 
-
 @routes.route("/project/<uuid:project_id>/files/new", methods=["POST"])
 @requires_authorization
 @check_session
@@ -2958,6 +2880,7 @@ def project_new_file_form(project_id, current_project, current_user):
             webdav=int(config["main"]["webdav"]),
             webdav_project=re.sub("[^a-zA-Z0-9а-яА-Я]", "_", current_project["name"]),
         )
+
 
 @routes.route("/project/<uuid:project_id>/files/<uuid:file_id>/", methods=["GET"])
 @requires_authorization
@@ -3437,6 +3360,225 @@ def project_chats_getlastmsg(
             {"email": email, "message": message["message"], "time": message["time"]}
         )
     return jsonify(message_array)
+
+
+#start of notification
+
+@routes.route("/project/<uuid:project_id>/notification/", methods=["GET"])
+@requires_authorization
+@check_session
+@check_password_reset
+@check_project_access
+@send_log_data
+
+def menu(project_id, current_project, current_user):
+    
+    notification = db.check_for_update(current_project['id'])
+    not_array= []
+    users_arr = {}
+    for current_chat in notification:
+        # userName=
+        chatId = current_chat['id']
+        projectId= current_project["id"]
+        newMessage =current_chat['message']
+        if not current_chat["user_id"] in users_arr:
+            Name = db.select_user_by_id(current_chat["user_id"])[0]["fname"]
+            users_arr[current_chat["user_id"]] = Name
+            
+            # users_arr[current_chat["user_id"]] = userName
+              
+        not_array.append({"userName": Name, 
+                          "chatId" : chatId ,
+                           "projectId" : projectId,
+                            "newMessage" : newMessage })
+    return jsonify(not_array)
+   
+@routes.route("/project/<uuid:project_id>/Filenotification/", methods=["GET"])
+@requires_authorization
+@check_session
+@check_password_reset
+@check_project_access
+@send_log_data
+def file (project_id, current_project, current_user):
+    file = []
+    update = db.view_all_not(current_project['id'])
+    db.insert_file_notification(current_project['id'])
+    users_arr = {}
+    for current_update in update:
+        
+        projectId= current_update["project_id"]
+        fileName =current_update['Description'] 
+        a = current_update["date_added"]
+        Reference= current_update["Reference"]
+        time1 = datetime.strptime(a,'%Y-%m-%d %H:%M:%S')
+        # time2 = datetime.timestamp(time)
+        date_added = datetime.timestamp(time1)
+        if not current_update["user_id"] in users_arr:
+            Name = db.select_user_by_id(current_update["user_id"])[0]["fname"]
+            users_arr[current_update["user_id"]] = Name
+        file.append({"userName": Name,
+                           "projectId" : projectId,
+                            "fileName" : fileName,
+                             "date_added": date_added,
+                             "Reference": Reference,
+                                "time":time1
+                               })
+        
+    return jsonify(file)
+    
+
+@routes.route("/project/<uuid:project_id>/cred_notification/", methods=["GET"])
+@requires_authorization
+@check_session
+@check_password_reset
+@check_project_access
+@send_log_data
+def cred (project_id, current_project, current_user):
+    update = db.check_update_credentials(current_project['id'])
+    db.insert_cred_notification(current_project['id'])
+   
+    cred = []
+    users_arr = {}
+    for current_update in update:
+        
+        projectId= current_project["id"]
+        a = current_update["date_added"]
+        time1 = datetime.strptime(a,'%Y-%m-%d %H:%M:%S')
+        # time2 = datetime.timestamp(time)
+        date_added = datetime.timestamp(time1)
+       
+        if not current_update["user_id"] in users_arr:
+            Name = db.select_user_by_id(current_update["user_id"])[0]["fname"]
+            users_arr[current_update["user_id"]] = Name
+        cred.append({"userName": Name,
+                    "projectId" :projectId,
+                    "date_added": date_added,
+                    "time":time1
+
+                         })
+    return jsonify(cred)
+    
+@routes.route("/project/<uuid:project_id>/host_notification/", methods=["GET"])
+@requires_authorization
+@check_session
+@check_password_reset
+@check_project_access
+@send_log_data
+def hostnot (project_id, current_project, current_user):
+    update = db.check_update_hosts(current_project['id'])
+    db.insert_hosts_notification(current_project['id'])
+   
+    host = []
+    users_arr = {}
+    for current_update in update:
+        
+        projectId= current_project["id"]
+        a = current_update["date_added"]
+        time1 = datetime.strptime(a,'%Y-%m-%d %H:%M:%S')
+        # time2 = datetime.timestamp(time)
+        date_added = datetime.timestamp(time1)
+       
+        if not current_update["user_id"] in users_arr:
+            Name = db.select_user_by_id(current_update["user_id"])[0]["fname"]
+            users_arr[current_update["user_id"]] = Name
+        host.append({"userName": Name,
+                    "projectId" :projectId,
+                    "date_added": date_added,
+                    "time":time1
+
+                         })
+    return jsonify(host)
+
+@routes.route("/project/<uuid:project_id>/issues_notification/", methods=["GET"])
+@requires_authorization
+@check_session
+@check_password_reset
+@check_project_access
+@send_log_data
+def issuesnot (project_id, current_project, current_user):
+    update = db.check_update_issues(current_project['id'])
+    db.insert_issues_notification(current_project['id'])
+    
+    issues = []
+    users_arr = {}
+    for current_update in update:
+        CVSS = current_update["cvss"]
+        projectId= current_project["id"]
+        a = current_update["date_added"]
+        time1 = datetime.strptime(a,'%Y-%m-%d %H:%M:%S')
+        # time2 = datetime.timestamp(time)
+        date_added = datetime.timestamp(time1)
+
+       
+        if not current_update["user_id"] in users_arr:
+            Name = db.select_user_by_id(current_update["user_id"])[0]["fname"]
+            users_arr[current_update["user_id"]] = Name
+        issues.append({"userName": Name,
+                    "projectId" :projectId,
+                    "cvss": CVSS,
+                    "date_added": date_added,
+                    "time":time1
+                         })
+    return jsonify(issues)
+
+
+@routes.route("/project/<uuid:project_id>/network_notification/", methods=["GET"])
+@requires_authorization
+@check_session
+@check_password_reset
+@check_project_access
+@send_log_data
+def networknot (project_id, current_project, current_user):
+    update = db.check_update_network(current_project['id'])
+    db.insert_network_notification(current_project['id'])
+    
+    network = []
+    users_arr = {}
+    for current_update in update:
+        
+        projectId= current_project["id"]
+        ip = current_update["ip"]
+        a = current_update["date_added"]
+        time1 = datetime.strptime(a,'%Y-%m-%d %H:%M:%S')
+        # time2 = datetime.timestamp(time)
+        date_added = datetime.timestamp(time1)
+
+        if not current_update["user_id"] in users_arr:
+            Name = db.select_user_by_id(current_update["user_id"])[0]["fname"]
+            users_arr[current_update["user_id"]] = Name
+        network.append({"userName": Name,
+                    "projectId" :projectId,
+                       "ip": ip,
+                         "date_added": date_added ,
+                    "time":time1
+                           })
+    return jsonify(network)
+
+
+
+# notification
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 @routes.route(
@@ -5065,188 +5207,16 @@ def project_issue_rules_form(project_id, current_project, current_user):
         issue_ids=form.issues_ids.data.split(","),
         rule_ids=form.rules_ids.data.split(","),
     )
-def check_allproject(fn):
-    @wraps(fn)
-    def decorated_view(*args, **kwargs):
-        projects = db.select_all_archived_projects()
-        kwargs["projects"] = projects
-        return fn(*args, **kwargs)
-    return decorated_view
-
-@routes.route("/list_allprojects/")
-@check_allproject
-def list_allprojects(projects):
-    return render_template("list_projects.html", projects=projects)
-
-# @routes.route("/score_projects/<uuid:project_id>/")
-# def view_project(project_id):
-#     project = db.select_project_by_id(project_id)
-#     testers = db.select_testers_by_project_id(project_id)
-#     return render_template("project_details.html", project=project, testers=testers)
-
-# @routes.route("/list_allprojects/", methods=["GET"])
-# @requires_authorization
-# @check_session
-# @check_password_reset
-# @send_log_data
-# def list_allprojects(current_user):
-#     projects = db.get_all_projects()
-#     return render_template("list_projects.html", projects=projects)
-from flask import flash
-
-@routes.route("/score_projects/<uuid:project_id>/", methods=["GET", "POST"])
+@routes.route("/project/<uuid:project_id>/Notifications/")
 @requires_authorization
 @check_session
 @check_password_reset
+@send_log_data
 @check_project_access
-def score_projects(project_id,current_project, current_user):
-    
-    if request.method == "POST":
-        # print("method post handdle")
-        testers = db.get_project_testers(str(project_id))
-        selected_project = db.get_project(str(project_id))[0] # fixed issue, indexing the result
-        project_level = selected_project["level"]
-
-        testers_usernames = []
-        if "rates[]" in request.form:
-            tester_rates = []
-            for rate in request.form.getlist("rates[]"):
-                if rate.isdigit():
-                    tester_rates.append(int(rate))
-                else:
-                    flash("Please select a valid rating for all users", "error")
-                    return redirect(request.url)
-            if not any(tester_rates):
-                flash("Please rate at least one user", "error")
-                return redirect(request.url)
-        else:
-            tester_rates = []
 
 
-        scores = []
-        total_scores = []
-        # print(" project_level: ",  project_level)
-        for i, tester in enumerate(testers):
-            # print(" enumerate: ", i)
-            if i >= len(tester_rates):
-                # print(" len ", len(tester_rates))
-                break
-            user_id = tester["user_id"].strip("[]").strip('"')
-            user_id = user_id.replace('"', '').strip()
-            user = db.get_user(user_id)
-            if user is not None:
-                score = int(tester_rates[i]) * int(project_level)
-                scores.append(score)
-                # print("scores: ", scores)
-
-                total_score = int(user["total_score"]) + score
-                total_scores.append(total_score)
-                # print("total_scores: ", total_scores)
-
-                db.update_user_score(user_id, total_score)
-                testers_usernames.append({"fname": user["fname"], "lname": user["lname"], "score": score})
-                testers_usernames[i]["status"] = "Rated"
-                success_type = "Badge_Added"
-                success = "Users Rated Successful!"
-
-        return render_template(
-            "project_details.html",
-            success_type=success_type,
-            success=success,
-            testers_usernames=testers_usernames,
-            project_level=project_level
-        )
-    else:
-        testers = db.get_project_testers(str(project_id))
-        testers_usernames = []
-        for tester in testers:
-            user_id = tester["user_id"].strip("[]").strip('"')
-            user_id = user_id.replace('"', '').strip()
-            user = db.get_user(user_id)
-            if user is not None:
-                testers_usernames.append({"fname": user["fname"], "lname": user["lname"], "status": "Not rated"})
-        
-        selected_project = db.get_project(str(project_id))[0] # fixed issue, indexing the result
-        project_level = selected_project["level"]
-
-        return render_template(
-            "project_details.html",
-            testers_usernames=testers_usernames,
-            project_level=project_level,
-            project_id=project_id
-        )
-
-from flask import url_for
-from PIL import Image
-import os
-
-@routes.route("/badges/create")
-@check_admin_access
-@requires_authorization
-@check_session
-@send_log_data
-def create_badge(current_user):
-    form = NewBadgeForm()
+def notifications(project_id, current_user, current_project):
+    # return render_template("notification.html", user_data=current_user, project_id= current_project['id'], tab_name="Notification")
     return render_template(
-        "badges/new.html",
-        form=form
+        "notification.html", current_project=current_project, tab_name="Notifications"
     )
-
-
-
-@routes.route("/badges/new", methods=["POST"])
-@check_admin_access
-@requires_authorization
-@check_session
-@send_log_data
-def new_badge(current_user):
-    if request.method != 'POST':
-        return redirect(url_for("routes.badge"))
-
-    if current_user["admin"] != 1:
-        abort(401, "Unauthorized to create a new badge")
-
-    form = NewBadgeForm()
-    errors = []
-    if form.errors:
-        for field in form.errors:
-            errors += form.errors[field]
-    if errors:
-        return jsonify({"success": False, "errors": errors}), 400
-
-    # Save the image to static/images folder
-    file = request.files['image']
-    filename = secure_filename(file.filename)
-    image_path = os.path.join('images', filename)
-    file.save(os.path.join('static', image_path))
-    badge_id = db.insert_badge(
-        form.name.data,
-        image_path,
-        form.score.data if form.score.data is not None else 0,
-        form.admin_only.data
-    )
-
-
-    return redirect(url_for("routes.view_badges"))
-
-@routes.route("/view_badges",methods=["GET"])
-@check_admin_access
-@requires_authorization
-@check_session
-@send_log_data
-def view_badges(current_user):
-    badges = db.select_all_badges()
-    return render_template('badges/all.html', badges=badges)
-
-@routes.route("/badges/<uuid:badge_id>", methods=["POST"])
-@check_admin_access
-@requires_authorization
-@check_session
-@send_log_data
-def delete_badge(current_user, badge_id):
-    if current_user["admin"] != 1:
-        abort(401, "Unauthorized to delete a badge")
-
-    db.delete_badge(badge_id)
-
-    return redirect(url_for("routes.view_badges"))

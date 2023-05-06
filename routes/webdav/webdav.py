@@ -97,7 +97,6 @@ class RootCollection(DAVCollection):
             return_obj = CategoryTypeCollection(p, env, name, db)
             return return_obj
         return None
-   
 
 
 class FileObject:

@@ -47,9 +47,6 @@ csrf.exempt("routes.ui.project.filter_host_port_form")
 csrf.exempt("routes.ui.project.edit_note_form")
 # disable csrf-protection for issue rule selection
 csrf.exempt("routes.ui.project.project_issue_rules_ids")
-import os
-
-static = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'static')
 
 config = config_dict()
 
@@ -58,7 +55,7 @@ compress = Compress()
 db = build_database()
 
 app = Flask(__name__,
-            static_folder=static,
+            static_folder=None,
             template_folder='templates')
 
 app.config['DATABASE'] = db

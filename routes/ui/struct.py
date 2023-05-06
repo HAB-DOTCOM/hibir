@@ -18,7 +18,6 @@ import urllib.parse
 from functools import wraps
 
 import io
-from flask import Flask, render_template, redirect, url_for
 
 from system.crypto_functions import check_hash, gen_uuid, md5_hex_str
 
@@ -450,7 +449,6 @@ def profile_form(current_user):
         error_type=error_type,
         success_type=success_type,
     )
-
 
 @routes.route("/logout")
 @requires_authorization
@@ -901,35 +899,16 @@ def team_user_edit(team_id, user_id, action, current_team, current_user):
 @check_session
 @check_password_reset
 def user_profile(user_id, current_user):
+    # TODO: fix
     user_data = db.select_user_by_id(str(user_id))
-    user = db.get_user(current_user["id"])
-    user_badges = db.select_user_badges(user_id)
-    badges = db.select_all_badges()
     if not user_data:
         return redirect("/profile")
     user_data = user_data[0]
     return render_template(
         "profile_noname.html",
         user_data=user_data,
-        user=user,
-        user_badges=user_badges,
-        badges=badges,
         tab_name="User: {}".format(user_data["email"]),
     )
-
-@routes.route("/update_user_badge_status/<uuid:user_id>/<uuid:badge_id>", methods=["POST"])
-@requires_authorization
-@check_session
-@check_password_reset
-def update_user_badge_status(user_id, badge_id, current_user):
-    user = db.get_user(current_user["id"])
-    
-    # Set the status value to 1
-    status = 1
-    
-    db.update_user_badge_status(user_id, badge_id, status)
-
-    return redirect(url_for("routes.user_profile", user_id=user_id))
 
 
 @routes.route("/projects/", methods=["GET"])
@@ -2131,3 +2110,7 @@ def global_search_json(current_user):
 
     return jsonify(result_dict)
 """
+
+
+
+
